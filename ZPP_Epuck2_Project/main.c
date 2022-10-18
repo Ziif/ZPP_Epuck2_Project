@@ -8,20 +8,48 @@
 #include "memory_protection.h"
 #include <main.h>
 
+#include "led.h"
+#include "spi_comm.h";
+#include "sensors/proximity.h";
+
+
+messagebus_t bus;
+MUTEX_DECL(bus_lock);
+CONDVAR_DECL(bus_condvar);
 
 int main(void)
 {
 
+	messagebus_init(&bus,&bus_lock,&bus_condverS);
     halInit();
     chSysInit();
     mpu_init();
-
 
     /* Infinite loop. */
     while (1) {
     	//waits 1 second
         chThdSleepMilliseconds(1000);
     }
+    clear_leds();
+    spi_comm_start();
+
+    void clear_leds(void);
+    void spi_comm_start(void);
+
+    void set_led(LED1,1);
+    void set_led(LED3,1);
+    void set_led(LED5,1);
+    void set_led(LED7,1);
+
+    void set_rgb_led(LED2 red);
+    void set_rgb_led(LED4 green);
+    void set_rgb_led(LED6 bule);
+    void set_rgb_led(LED8 red);
+
+    void set_body_led(1);
+    void set_front_led(0);
+
+
 }
 
 #define STACK_CHK_GUARD 0xe2dee396
