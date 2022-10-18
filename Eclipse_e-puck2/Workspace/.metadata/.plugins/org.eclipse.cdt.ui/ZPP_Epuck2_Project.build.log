@@ -1,0 +1,6 @@
+20:51:59 **** Build of configuration Default for project ZPP_Epuck2_Project ****
+make all 
+make: 对“all”无需做任何事。
+
+20:52:02 Build Finished. 0 errors, 0 warnings. (took 2s.634ms)
+
