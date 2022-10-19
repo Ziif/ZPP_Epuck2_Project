@@ -204,3 +204,21 @@ arm-none-eabi-gcc -c -mcpu=cortex-m4 -O2 -ggdb -fomit-frame-pointer -falign-func
 20:51:59 **** Build of configuration Default for project ZPP_Epuck2_Project ****
 make all 
 make: 对“all”无需做任何事。
+12:39:09 **** Incremental Build of configuration Default for project ZPP_Epuck2_Project ****
+make all 
+[1;34mCompiling main.c[0m
+main.c:11:10: fatal error: led.h: No such file or directory
+ #include "led.h"
+          ^~~~~~~
+compilation terminated.
+make: *** [../e-puck2_main-processor/ChibiOS//os/common/ports/ARMCMx/compilers/GCC/rules.mk:217：build/obj/main.o] 错误 1
+"make all" terminated with exit code 2. Build might be incomplete.
+12:42:08 **** Incremental Build of configuration Default for project ZPP_Epuck2_Project ****
+make all 
+[1;34mCompiling main.c[0m
+main.c:11:10: fatal error: led.h: No such file or directory
+ #include "led.h"
+          ^~~~~~~
+compilation terminated.
+make: *** [../e-puck2_main-processor/ChibiOS//os/common/ports/ARMCMx/compilers/GCC/rules.mk:217：build/obj/main.o] 错误 1
+"make all" terminated with exit code 2. Build might be incomplete.

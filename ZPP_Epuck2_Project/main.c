@@ -33,21 +33,19 @@ int main(void)
     clear_leds();
     spi_comm_start();
 
-    void clear_leds(void);
-    void spi_comm_start(void);
 
-    void set_led(LED1,1);
-    void set_led(LED3,1);
-    void set_led(LED5,1);
-    void set_led(LED7,1);
+    et_led(LED1,1);
+    set_led(LED3,1);
+    set_led(LED5,1);
+    set_led(LED7,1);
 
-    void set_rgb_led(LED2 red);
-    void set_rgb_led(LED4 green);
-    void set_rgb_led(LED6 bule);
-    void set_rgb_led(LED8 red);
+    set_rgb_led(LED2 red);
+    set_rgb_led(LED4 green);
+    set_rgb_led(LED6 bule);
+    set_rgb_led(LED8 red);
 
-    void set_body_led(1);
-    void set_front_led(0);
+    set_body_led(1);
+    set_front_led(0);
 
 
 }
