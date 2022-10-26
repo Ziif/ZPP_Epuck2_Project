@@ -1,0 +1,138 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+#include "ch.h"
+#include "hal.h"
+#include "memory_protection.h"
+#include <main.h>
+
+#include "leds.h"
+#include "spi_comm.h"
+#include "sensors/proximity.h"
+#include "motors.h"
+#include "sensors/VL53L0X/VL53L0X.h"
+
+messagebus_t bus;
+MUTEX_DECL(bus_lock);
+CONDVAR_DECL(bus_condvar);
+
+int main(void)
+{
+
+    halInit();
+    chSysInit();
+    mpu_init();
+
+    messagebus_init(&bus, &bus_lock, &bus_condvar);
+
+    // Your initialisations here
+    proximity_start()；
+    calibrate_ir();
+    motors_intt();
+    VL53L0X_start();
+    clear_leds();
+    spi_comm_start();
+
+   // continue code below here...
+    int ps_threshold = 500;
+    int ps_value[8] = {0};
+    uint16_t ds_value = VL53L0X_get_dist_mm(); //获取distance sensor传感器的数值，这个传感器只有一个，我不知道能不能这么写
+
+
+
+    /* Infinite loop. */
+    while (1) {
+    	//waits 1 second
+        //chThdSleepMilliseconds(200);
+	for (int i = 0; i < 8; i++)
+                 {
+                  ps_value[i] = get_calibrated_prox(i);
+                 }
+
+	// target ahead
+        	if (ps_value[0] > ps_threshold && ps_value[7]> ps_threshold )
+	{
+	// go ahead
+	left_motor_set_speed(350);
+                right_motor_set_speed(350);
+		if(ds_value<=30)
+		{
+		left_motor_set_speed(0);
+              		right_motor_set_speed(0);
+		}
+	}
+
+	//target on the left
+	else if (ps_value[5] > ps_threshold || ps_value[6] > ps_threshold || ps_value[7] > ps_threshold)
+	{
+	//turn left
+	left_motor_set_speed(100);
+                right_motor_set_speed(350);
+		if (ps_value[0] > ps_threshold && ps_value[7]> ps_threshold )
+		{
+		// go ahead
+		left_motor_set_speed(350);
+               		right_motor_set_speed(350);
+			if(ds_value<=30)
+			{
+			left_motor_set_speed(0);
+              			right_motor_set_speed(0);
+			}
+		}
+	}
+
+	//target on the right
+	else if (ps_value[0] > ps_threshold || ps_value[1] > ps_threshold || ps_value[2] > ps_threshold)
+	{
+	//turn right
+	left_motor_set_speed(350);
+                right_motor_set_speed(100);
+		if (ps_value[0] > ps_threshold && ps_value[7]> ps_threshold )
+		{
+		// go ahead
+		left_motor_set_speed(350);
+               		right_motor_set_speed(350);
+			if(ds_value<=30)
+			{
+			left_motor_set_speed(0);
+              			right_motor_set_speed(0);
+			}
+		}
+	}
+
+	//target behind
+	else if (ps_value[3] > ps_threshold || ps_value[4] > ps_threshold )
+	{
+	//turn right
+	left_motor_set_speed(350);
+                right_motor_set_speed(100);
+		if (ps_value[0] > ps_threshold && ps_value[7]> ps_threshold )
+		{
+		// go ahead
+		left_motor_set_speed(350);
+               		right_motor_set_speed(350);
+			if(ds_value<=30)
+			{
+			left_motor_set_speed(0);
+              			right_motor_set_speed(0);
+			}
+		}
+	}
+
+	else{
+	//stop
+	left_motor_set_speed(0);
+               	right_motor_set_speed(0);
+	}
+       }
+}
+
+#define STACK_CHK_GUARD 0xe2dee396
+uintptr_t __stack_chk_guard = STACK_CHK_GUARD;
+
+void __stack_chk_fail(void)
+{
+    chSysHalt("Stack smashing detected");
+}

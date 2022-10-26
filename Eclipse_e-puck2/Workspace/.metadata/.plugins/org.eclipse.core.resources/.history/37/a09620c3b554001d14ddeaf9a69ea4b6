@@ -1,0 +1,94 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+#include "ch.h"
+#include "hal.h"
+#include "memory_protection.h"
+#include <main.h>
+
+
+#include "leds.h"
+#include "spi_comm.h"
+#include "sensors/proximity.h"
+#include "motors.h"
+
+
+messagebus_t bus;
+//MUTEX_DECL(bus_lock);
+CONDVAR_DECL(bus_condvar);
+
+int main(void)
+{
+
+    halInit();
+    chSysInit();
+    mpu_init();
+
+	 /** Inits the Inter Process Communication bus. */
+	//messagebus_init(&bus, &bus_lock, &bus_condvar);
+
+
+
+	clear_leds();
+	set_body_led(0);
+	set_front_led(0);
+    motors_init(); //motors initial  电机初始化
+    //VL53L0X_start(); //初始化距离传感器
+
+
+    left_motor_set_speed(0); //left montor speed  左电机速度
+    right_motor_set_speed(0);  //left montor speed  右电机速度
+
+
+
+  //  int get_prox(unsigned int sensor_number); //从 sensor_number 0-7 获取接近度读数
+
+
+
+    /* Infinite loop. */
+    while (1) {
+    	//waits 1 second
+        chThdSleepMilliseconds(1000);
+
+
+        char proximity_sensor [8] =("ps0","ps1","ps2","ps3","ps4","ps5","ps6","ps7");
+
+        for(int i = 0; i < 8; ++i)
+        {
+        	int proximity_reading = get_prox(i);//获取距离传感器读数
+
+        	if( proximity_reading > 100 )
+        	{
+        		left_motor_set_speed(300);
+        		right_motor_set_speed(300);
+            }
+        	else
+        	{
+                left_motor_set_speed(0);
+                right_motor_set_speed(0);
+        	}
+
+        }
+    }
+
+    //    robot_cleanup(); //robot stop  机器人停止工作
+
+
+for
+
+//-------------------------------------------------------------------
+
+
+
+
+}
+
+#define STACK_CHK_GUARD 0xe2dee396
+uintptr_t __stack_chk_guard = STACK_CHK_GUARD;
+
+void __stack_chk_fail(void)
+{
+    chSysHalt("Stack smashing detected");
+}

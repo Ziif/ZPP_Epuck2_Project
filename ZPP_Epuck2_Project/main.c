@@ -15,120 +15,130 @@
 #include "motors.h"
 
 
+
 messagebus_t bus;
-MUTEX_DECL(bus_lock);
+//MUTEX_DECL(bus_lock);
 CONDVAR_DECL(bus_condvar);
 
 int main(void)
 {
-
+	//messagebus_init(&bus, &bus_lock, &bus_condvar);
     halInit();
     chSysInit();
     mpu_init();
-
 	 /** Inits the Inter Process Communication bus. */
-	messagebus_init(&bus, &bus_lock, &bus_condvar);
 
 
-	// Init the peripherals.  初始化外围设备
 	clear_leds();
 	set_body_led(0);
 	set_front_led(0);
     motors_init(); //motors initial  电机初始化
+    proximity_start(); //Start the proximity measurement module
+    calibrate_ir();	//Calibrate the proximity sensors
     //VL53L0X_start(); //初始化距离传感器
-   // robot_init(); //robot initial  机器人初始化
 
 
     left_motor_set_speed(0); //left montor speed  左电机速度
     right_motor_set_speed(0);  //left montor speed  右电机速度
 
-    proximity_start();//启动接近测量模块
-    calibrate_ir();//校准测量模块
 
 
   //  int get_prox(unsigned int sensor_number); //从 sensor_number 0-7 获取接近度读数
 
-
-//
-//    clear_leds();
-//    spi_comm_start();
-
-
+    int threshold = 500;   //set theshold for proximity(distance)
 
     /* Infinite loop. */
-    while (1) {
+    while (1)
+    {
     	//waits 1 second
         chThdSleepMilliseconds(1000);
 
+        int proximity_sensor[8] ={0,1,2,3,4,5,6,7};	 //Name the 8 proximity sensors
+        int proximity_reading[8];	 //Define an array to store 8 sensors's proximity parameters
+        for(int i = 0; i < 8; i++)
+        { 	// loop through each sensor
+        	proximity_reading[i] = get_prox(i);	// get proximity(distance) sensor readings
 
-
-//        set_led(LED1,1);
-//        chThdSleepMilliseconds(1000);
-//        set_led(LED3,1);
-//        chThdSleepMilliseconds(1000);
-//        set_led(LED5,1);
-//        chThdSleepMilliseconds(1000);
-//        set_led(LED7,1);
-//        chThdSleepMilliseconds(1000);
-//        set_led(LED1,0);
-//        set_led(LED3,0);
-//        set_led(LED5,0);
-//        set_led(LED7,0);
-///*------------------------------------------------------------------------------------ */
-//
-//        set_rgb_led(2,0,0,10);
-//        set_rgb_led(4,10,0,0);
-//        set_rgb_led(6,0,10,0);
-//        set_rgb_led(8,0,10,0);
-//
-//        set_body_led(1);
-//        set_front_led(0);
-
-
-
-//--------------------------------------------------------------------
-
-        //uint16_t VL53L0X_get_dist_mm();//返回距离传感器检测到的距离（毫米mm）
-
-        left_motor_set_speed(0); //left montor speed  左电机速度
-        right_motor_set_speed(0);  //left montor speed  右电机速度
-
-        left_motor_get_desired_speed(); //获得左电机速度
-        right_motor_get_desired_speed();  //获得右电机速度
-
-
-        //int ind = 0;
-        //int proximity_reading  = 1000;
-        //for 循环遍历所有传感器
-        for(int ind = 0; ind < 8; ++ind)
-        {
-        	int proximity_reading = get_prox(ind);//获取距离传感器读数
-
-        	if( proximity_reading > 100 )
+        	//-------------------avoid obstacles------------------------
+        	if(proximity_reading[5] < 200) //The epuck is too close to the left wall
         	{
-        		left_motor_set_speed(300);
-        		right_motor_set_speed(300);
-            }
-        	else
-        	{
-                left_motor_set_speed(0);
-                right_motor_set_speed(0);
+            	left_motor_set_speed(0);	// epuck stop
+            	right_motor_set_speed(0);
+            	chThdSleepMilliseconds(1000);//wait 1s;
+
+            	left_motor_set_speed(310);	//epuck turn right slightly
+            	right_motor_set_speed(300);
+            	chThdSleepMilliseconds(1000);//wait 1s;
         	}
+        	else if(proximity_reading[5] < proximity_reading[6] && proximity_reading[0] == 0 && proximity_reading[7] == 0)	//The epuck came to the left corner
+        	{
+        		left_motor_set_speed(0);	// epuck stop
+        		right_motor_set_speed(0);
+        		chThdSleepMilliseconds(1000);//wait 1s;
 
+        		left_motor_set_speed(310);	//epuck turn right slightly
+        		right_motor_set_speed(300);
+        		chThdSleepMilliseconds(1000);//wait 1s;
+        	}
+        	else if(proximity_reading[0] < threshold || proximity_reading[7] < threshold && proximity_reading[2] == 0)	//obstacles ahead
+        	{
+            	left_motor_set_speed(0);	// epuck stop
+            	right_motor_set_speed(0);
+            	chThdSleepMilliseconds(1000);//wait 1s;
+
+            	left_motor_set_speed(300);	//epuck turn right
+            	right_motor_set_speed(-300);
+            	chThdSleepMilliseconds(1000);//wait 1s;
+        	}
+        	else if(proximity_reading[2] < 200) //The epuck is too close to the right wall
+        	{
+            	left_motor_set_speed(0);	// epuck stop
+            	right_motor_set_speed(0);
+                chThdSleepMilliseconds(1000);//wait 1s;
+
+                left_motor_set_speed(300);	//epuck turn left slightly
+            	right_motor_set_speed(310);
+            	chThdSleepMilliseconds(1000);//wait 1s;
+        	}
+        	else if(proximity_reading[0] < threshold || proximity_reading[7] < threshold && proximity_reading[2] < 300)	//The epuck came to the right corner of the area
+        	{
+            	left_motor_set_speed(0);	// epuck stop
+            	right_motor_set_speed(0);
+                chThdSleepMilliseconds(1000);//wait 1s;
+
+            	left_motor_set_speed(-300);	//epuck turn right
+            	right_motor_set_speed(300);
+            	chThdSleepMilliseconds(1000);//wait 1s;
+        	}
+        	else if(proximity_reading[0] < threshold && proximity_reading[1] < threshold && proximity_reading[2] < threshold && proximity_reading[5] < threshold && proximity_reading[6] < threshold && proximity_reading[7] < threshold )	// The epuck entered the narrow alley
+        	{
+            	left_motor_set_speed(0);	// epuck stop
+            	right_motor_set_speed(0);
+                chThdSleepMilliseconds(1000);//wait 1s;
+
+                while(1)	//The epuck keeps spinning in place (look for the exit of the alley)
+                {
+					left_motor_set_speed(30);	// epuck turn around
+					right_motor_set_speed(-30);
+					chThdSleepMilliseconds(3000);//wait 3s;
+
+					if(proximity_reading[0]  == 0 && proximity_reading[7] == 0)	//An exit is detected and the epuck head is facing the alley exit
+					{
+						left_motor_set_speed(0);	// epuck stop
+						right_motor_set_speed(0);
+						chThdSleepMilliseconds(1000);//wait 1s;
+						break;	// break the while loop
+					}
+                }
+        	}
+        	else	//The epuck moves normally
+        	{
+            	left_motor_set_speed(300);	// epuck go straight
+            	right_motor_set_speed(300);
+            	chThdSleepMilliseconds(1000);//wait 1s;
+        	}
         }
     }
-
-
-    //    robot_cleanup(); //robot stop  机器人停止工作
-
-
-
-
-//-------------------------------------------------------------------
-
-
-
-
 }
 
 #define STACK_CHK_GUARD 0xe2dee396

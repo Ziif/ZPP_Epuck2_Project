@@ -1,0 +1,144 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+#include "ch.h"
+#include "hal.h"
+#include "memory_protection.h"
+#include <main.h>
+
+
+#include "leds.h"
+#include "spi_comm.h"
+#include "sensors/proximity.h"
+#include "motors.h"
+
+
+messagebus_t bus;
+//MUTEX_DECL(bus_lock);
+CONDVAR_DECL(bus_condvar);
+
+int main(void)
+{
+
+    halInit();
+    chSysInit();
+    mpu_init();
+
+	 /** Inits the Inter Process Communication bus. */
+	//messagebus_init(&bus, &bus_lock, &bus_condvar);
+
+
+
+	clear_leds();
+	set_body_led(0);
+	set_front_led(0);
+    motors_init(); //motors initial  电机初始化
+    //VL53L0X_start(); //初始化距离传感器
+
+
+    left_motor_set_speed(0); //left montor speed  左电机速度
+    right_motor_set_speed(0);  //left montor speed  右电机速度
+
+
+
+  //  int get_prox(unsigned int sensor_number); //从 sensor_number 0-7 获取接近度读数
+
+    int threshold = 500;   //set theshold for proximity(distance)
+
+    /* Infinite loop. */
+    while (1) {
+    	//waits 1 second
+        chThdSleepMilliseconds(1000);
+
+
+
+        int main()
+        {
+            int proximity_sensor[8] ={0,1,2,3,4,5,6,7};	 //Name the 8 proximity sensors
+        	int proximity_reading[8];	 //Define an array to store 8 sensors's proximity parameters
+        	for(int i = 0; i < 8; i++)
+        	{ 	// loop through each sensor
+        		proximity_reading[i] = get_prox(i);	// get proximity(distance) sensor readings
+        		cout << "proximity sensor "<< i << ": "<< proximity_reading[i] << endl; 	//Output the value of each sensor
+
+        		//-------------------avoid obstacles------------------------
+        		if(proximity_reading[5] < 200) //The epuck is too close to the left wall
+        		{
+            		left_motor_set_speed(0);	// epuck stop
+            		right_motor_set_speed(0);
+
+                    chThdSleepMilliseconds(1000);//wait 1s;
+
+            		left_motor_set_speed(310);	//epuck turn right slightly
+            		right_motor_set_speed(300);
+
+            		chThdSleepMilliseconds(1000);//wait 1s;
+
+
+        		}
+        		else if(proximity_reading[0] < threshold || proximity_reading[7] < threshold && proximity_reading[2] == 0)	//obstacles ahead
+        		{
+            		left_motor_set_speed(0);	// epuck stop
+            		right_motor_set_speed(0);
+
+                    chThdSleepMilliseconds(1000);//wait 1s;
+
+            		left_motor_set_speed(300);	//epuck turn right
+            		right_motor_set_speed(-300);
+            		//
+            		chThdSleepMilliseconds(1000);//wait 1s;
+        		}
+        		else if(proximity_reading[5] < proximity_reading[6] && proximity_reading[0] == 0 && proximity_reading[7] == 0)	//The epuck came to the left corner
+        		{
+            		left_motor_set_speed(0);	// epuck stop
+            		right_motor_set_speed(0);
+
+                    chThdSleepMilliseconds(1000);//wait 1s;
+
+            		left_motor_set_speed(310);	//epuck turn right slightly
+            		right_motor_set_speed(300);
+
+            		chThdSleepMilliseconds(1000);//wait 1s;
+        		}
+        	}
+        }
+
+
+        for(int i = 0; i < 8; ++i)
+        {
+        	int proximity_reading = get_prox(i);// get proximity(distance) sensor readings
+
+        	if( proximity_reading > 100 )
+        	{
+        		left_motor_set_speed(300);
+        		right_motor_set_speed(300);
+            }
+        	else
+        	{
+                left_motor_set_speed(0);
+                right_motor_set_speed(0);
+        	}
+
+        }
+    }
+
+    //    robot_cleanup(); //robot stop  机器人停止工作
+
+
+
+
+//-------------------------------------------------------------------
+
+
+
+}
+
+#define STACK_CHK_GUARD 0xe2dee396
+uintptr_t __stack_chk_guard = STACK_CHK_GUARD;
+
+void __stack_chk_fail(void)
+{
+    chSysHalt("Stack smashing detected");
+}
